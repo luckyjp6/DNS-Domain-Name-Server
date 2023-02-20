@@ -30,21 +30,7 @@
 28: AAAA x
 */
 
-void print_str(char *s) {
-        char *p = s;
-        int now = 0;
-        char out[NAME_LENGTH];
-        while(1) {
-            int len = (int)*p;
-            if (len == 0) break;
-            std::cout << len << " ";
-            p++;
-            memcpy(out + now, p, len);
-            p += len; now += len;
-        }
-        std::cout << out << std::endl;
-    }
-
+// binary part of the header
 struct Header_flag {
     uint    QR : 1;     // query(0) or reponse(1)
     uint    Opcode : 4;
@@ -54,12 +40,9 @@ struct Header_flag {
     uint    RA : 1;
     uint    Z : 3;
     uint    RCODE : 4;  // error code
-
-    // Header_flag() {}
-    // Header_flag(uint16_t in) {
-
-    // }
 }__attribute__((packed));
+
+// DNS header
 struct Header {
     uint16_t     ID;
     uint16_t     flg; 
@@ -92,15 +75,6 @@ struct Header {
         using namespace std;
         cout << "ID: " << ID << endl;
         cout << "flg: " << flg << endl;
-        // Header_flag ff = static_cast<Header_flag>(flg);
-        // cout << "QR: " << ff.QR << endl;
-        // cout << "Opcode: " << ff.Opcode << endl;
-        // cout << "AA: " << ff.AA << endl;
-        // cout << "TC: " << ff.TC << endl;
-        // cout << "RD: " << ff.RD << endl;
-        // cout << "RA: " << ff.RA << endl;
-        // cout << "Z: " << ff.Z << endl;
-        // cout << "RCODE: " << ff.RCODE << endl;
         cout << "QDCOUNT: " << QDCOUNT << endl;
         cout << "ANCOUNT: " << ANCOUNT << endl;
         cout << "NSCOUNT: " << NSCOUNT << endl;
@@ -108,12 +82,14 @@ struct Header {
         cout << endl;
     }
 }__attribute__((packed));
+
 struct Question_const {
     uint    QTYPE2 : 8 = 0;
     uint    QTYPE : 8;
     uint    QCLASS2 : 8 = 0;
     uint    QCLASS : 8;
 };
+
 struct Question {
     char    QNAME[NAME_LENGTH];  
     Question_const qc;
@@ -129,6 +105,7 @@ struct Question {
     // }
     
 };
+
 struct  RR_const {
     uint    TYPE1 : 8;
     uint    TYPE : 8;
@@ -143,6 +120,7 @@ struct RR {
     char    RDATA[MSG_MAX];
 };
 
+// details of each domain name
 struct details {
     char        NAME[NAME_LENGTH];
     RR_const    r;
@@ -152,6 +130,7 @@ struct details {
 
     details () {}
     details (char *msg, char* domain_name) {
+        // process the details
         r.TYPE1 = 0; r.CLASS1 = 0; r.RDLENGTH = 0;
         char *tmp_name = strtok_r(msg, ",", &msg);
         if (strcmp(tmp_name, "@") == 0) {
@@ -173,7 +152,7 @@ struct details {
         else if (strcmp(TYPE_char, "AAAA") == 0) r.TYPE = 28;
      
         memset(RDATA, 0, MSG_MAX);
-        if (r.TYPE == 1 || r.TYPE == 28) { // A, AAAA
+        if (r.TYPE == 1 || r.TYPE == 28) { /* A and AAAA */
             char *data = strtok_r(msg, "\r\n", &msg);
             strcpy(RDATA, data);
             if (r.TYPE == 1) {
@@ -185,7 +164,7 @@ struct details {
                 r.RDLENGTH = sizeof(RDATA_int_6);
             }
             
-        }else if (r.TYPE == 6) { // SOA
+        }else if (r.TYPE == 6) { /* SOA */
             for (int i = 0; i < 2; i++) {
                 char *data = strtok_r(msg, " ", &msg);
                 char *dot;
@@ -206,7 +185,7 @@ struct details {
                 r.RDLENGTH += sizeof(uint32_t);
                 memset(now, 0, strlen(now));
             }
-        }else if (r.TYPE == 15) { // MX
+        }else if (r.TYPE == 15) { /* MX */
             char *now = strtok_r(msg, " ", &msg);
             uint16_t to_int = atoi(now);
             to_int = htons(to_int);
@@ -223,13 +202,13 @@ struct details {
             }
             r.RDLENGTH++;
         }
-        else if (r.TYPE == 16) { // TXT
+        else if (r.TYPE == 16) { /* TXT */
             RDATA[0] = strlen(msg)-2;
             memcpy(RDATA+1, msg+1, strlen(msg)-2);
             r.RDLENGTH = strlen(msg)-1;
             std::cout << r.RDLENGTH << std::endl;
         }
-        else {
+        else { /* others */
             char *data = strtok_r(msg, "\r\n", &msg);
             char *dot;
             while ((dot = strtok_r(data, ".", &data))) {
@@ -243,7 +222,6 @@ struct details {
         }
     }
     void to_network_endian() {
-        // RDATA_int = htonl(RDATA_int);
         r.TTL = htonl(r.TTL);
         r.RDLENGTH = htons(r.RDLENGTH);
     }
@@ -257,6 +235,8 @@ struct details {
         if (r.TYPE != 1 && r.TYPE != 28) cout << "RDATA: " << RDATA << endl;
     }
 };
+
+// the zone
 struct domain {
     char    domain_name[NAME_LENGTH];
     char    name[NAME_LENGTH];
@@ -337,6 +317,8 @@ struct domain {
         cout << endl;
     }
 };
+
+// the config file
 struct config {
     char forwardIP[100];
     std::vector<domain> dom;
@@ -375,28 +357,22 @@ struct config {
 
 struct DNS_request {
     Header      header;
-    char        remain[MSG_MAX];
+    char        payload[MSG_MAX];
     Question    question;
     uint32_t    nip;
 
-    void process_remain() { 
-        // question
-        char *r = remain, empty[]="0"; empty[0] = 0;
+    void process_request_payload() { 
+        // process the payload of the request
+        char *r = payload, empty[]="0"; empty[0] = 0;
         char *pos = strtok_r(r, empty, &r);
-        strcpy(question.QNAME, remain);
+        strcpy(question.QNAME, payload);
         
         r++;
-        question.qc.QTYPE = (int)r[1]; //question.QTYPE2 = (int)r[1];
-        question.qc.QCLASS = (int)r[3]; //question.QCLASS2 = (int)r[3];
+        question.qc.QTYPE = (int)r[1]; 
+        question.qc.QCLASS = (int)r[3];
 
     }
     bool check_nip(char *domain_name) {
-        // char    *num, *others;
-        // sscanf(question.QNAME, "%[1-9]%s)", num, others);
-        // print_str(num);
-        // print_str(others);
-        // std::cout << "num: " << num << std::endl;
-        // std::cout << "others: " << others << std::endl;
         char *now = question.QNAME;
         char tmp_ip[NAME_LENGTH] = {0};
         int tmp_len = 0;
@@ -444,14 +420,6 @@ struct  DNS_reply {
     void set_header(Header rq, int is_author) {
         header.ID = rq.ID;
         header.flg = rq.flg + (1<<15) + (is_author << 10); // set QR and AA
-        // header.flg.QR = 1;
-        // header.flg.Opcode = rq.flg.Opcode;
-        // header.flg.AA = is_author;
-        // header.flg.TC = 0;
-        // header.flg.RD = rq.flg.RD;
-        // header.flg.RA = rq.flg.RA;
-        // header.flg.Z = 0;
-        // header.flg.RCODE = rq.flg.RCODE;
         header.QDCOUNT = 1;
         header.ANCOUNT = 0;
         header.NSCOUNT = 0;
@@ -483,7 +451,6 @@ struct  DNS_reply {
         std::vector<int> author_content;
         if (header.ANCOUNT > 0) d.get_NS(author_content); // add NS
         else d.get_SOA(author_content);// add SOA
-// for (auto i:author_content) std::cout << i << " "; std::cout << std::endl;
         for (auto index:author_content) {
             header.NSCOUNT++;
             int name_len = strlen(d.det[index].NAME);

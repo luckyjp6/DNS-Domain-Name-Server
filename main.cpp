@@ -17,39 +17,36 @@ int main(int argc, char **argv) {
 
 	bzero(&servaddr, sizeof(servaddr));
 	servaddr.sin_family      = AF_INET;
-	servaddr.sin_addr.s_addr = htonl(INADDR_ANY); // 0
+	servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
 	servaddr.sin_port        = htons(atoi(argv[1]));
 
-	if (bind(srv, (const sockaddr *) &servaddr, sizeof(servaddr)) < 0) 
-    {
+	if (bind(srv, (const sockaddr *) &servaddr, sizeof(servaddr)) < 0) {
 		cout << "failed to bind" << endl;
 		return -1;
 	}
     int conf = open(argv[2], O_RDONLY);
     config my_conf;
     my_conf.read_config(conf);
-    // my_conf.print_();
 
     while (1) {
         DNS_request request;
         DNS_reply reply;
         int         D_len;
+        // get request
         if ((D_len = recvfrom(srv, &request, sizeof(DNS_request), 0, (sockaddr *)&cliaddr, &clilen)) < 0) {
             cout << "can't recvfrom socket srv" << endl;
             return -1;
         }
-        request.process_remain();
+        request.process_request_payload();
         request.to_host_endian();
 
         reply.add_question(request.question);
-        int reply_from = strlen(request.question.QNAME) + sizeof(Question_const) + 1; // +1 for 00
+        int reply_from = strlen(request.question.QNAME) + sizeof(Question_const) + 1;
         int domain_index = my_conf.get_domain(request.question.QNAME);
         
+        // resolve unknown domain
         if (domain_index < 0) {
-            /* resolve unknown domain */ 
-            /* send dns request to "forward ip" indicate in config*/
-            cout << "in resolve" << endl;
-            
+            // send dns request to "forward ip" indicate in config file
             sockaddr_in rin;
             rin.sin_family = AF_INET;
             rin.sin_port = htons(53);
@@ -68,28 +65,32 @@ int main(int argc, char **argv) {
             continue;
         }
 
+        // handle nip request
         if (request.check_nip(my_conf.dom[domain_index].domain_name)) {
-            /* do nip */
             reply.set_header(request.header, true);
             reply_from = reply.add_nip(reply_from, request);
             reply.header.to_network_endian();
             sendto(srv, &reply, sizeof(Header)+reply_from, 0, (sockaddr *)&cliaddr, clilen);
             continue;
-        }
-
+        }        
         
-        
-        reply.set_header(request.header, false);
+        // handle normal request
         vector<int> ans_content, addi_content;
+        reply.set_header(request.header, false);
+        // get domain name details
         my_conf.dom[domain_index].get_detail(request.question, ans_content);
+        // add the details into reply
         reply_from = reply.add_content(my_conf.dom[domain_index], ans_content, reply_from, request.question);
 
+        // for request other than NS, add authority
         if (request.question.qc.QTYPE != 2) 
             reply_from = reply.add_author(my_conf.dom[domain_index], reply_from);
-
-        if (request.question.qc.QTYPE == 2 || request.question.qc.QTYPE == 15) // NX, MX
+        
+        // for NX and MX, get more addi
+        if (request.question.qc.QTYPE == 2 || request.question.qc.QTYPE == 15) 
             my_conf.dom[domain_index].get_addi(ans_content, addi_content);
 
+        // add addi
         reply_from = reply.add_addi(addi_content, my_conf.dom[domain_index], reply_from);
 
         reply.header.to_network_endian();
