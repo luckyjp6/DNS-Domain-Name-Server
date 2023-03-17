@@ -244,10 +244,10 @@ struct domain {
     std::vector<details> det;
 
     domain () {}
-    domain (char *msg) {
+    domain (char *msg, char *dir) {
         char *pos = strtok_r(msg, ",", &msg);
         strcpy(name, pos);
-        strcpy(path, msg);
+        sprintf(path, "%s/%s", dir, msg);
     }
     void read_domain () {
         int file = open(path, O_RDONLY);
@@ -323,7 +323,7 @@ struct config {
     char forwardIP[100];
     std::vector<domain> dom;
 
-    void read_config(int fd) {
+    void read_config(int fd, char *dir) {
         char msg[MSG_MAX];
         read(fd, msg, MSG_MAX);
 
@@ -331,7 +331,7 @@ struct config {
         char *pos = strtok_r(m, "\r\n", &m);
         strcpy(forwardIP, pos);
         while (pos = strtok_r(m, "\r\n", &m)) {
-            domain d(pos);
+            domain d(pos, dir);
             d.read_domain();
             dom.push_back(d);
             memset(pos, 0, strlen(pos));

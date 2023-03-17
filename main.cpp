@@ -4,7 +4,7 @@ using namespace std;
 
 int main(int argc, char **argv) {
     if (argc < 3) {
-        printf("Usage: ./dns <port-number> <path/to/the/config/file>\n");
+        printf("Usage: ./dns <port-number> <path/to/the/config_directory> <config_name>\n");
         return -1;
     }
     int					srv, connfd;
@@ -24,9 +24,14 @@ int main(int argc, char **argv) {
 		cout << "failed to bind" << endl;
 		return -1;
 	}
-    int conf = open(argv[2], O_RDONLY);
+    
+    char path[1000];
+    memset(path, 0, 1000);
+    sprintf(path, "%s/%s", argv[2], argv[3]);
+
+    int conf = open(path, O_RDONLY);
     config my_conf;
-    my_conf.read_config(conf);
+    my_conf.read_config(conf, argv[2]);
 
     while (1) {
         DNS_request request;
