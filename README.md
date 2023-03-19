@@ -41,5 +41,5 @@ There are two sets of example files in 'config/', please follow the format to wr
   
 https://user-images.githubusercontent.com/96563567/226161319-83ae855e-469a-4f0a-abed-55e09a62d1fb.mp4
 - For terminal command  
-  
-https://user-images.githubusercontent.com/96563567/226161469-4788aa8c-8340-4a32-ba90-2e355ff4edad.mp4
+   
+https://user-images.githubusercontent.com/96563567/226174270-7e586019-87cc-4697-878c-a860a01ce771.mp4
