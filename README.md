@@ -18,7 +18,7 @@ The following lines are the domain(s) and its corresponding zone file(s).
 There are two sets of example files in 'config/', please follow the format to write your own config file(s).
 
 ## Implemented Query Types
-- A:     IPv4 host address
+- A:     IPv4 host address (default type)
 - AAAA:  IPv6 host address
 - CNAME: The canonical name for an alias
 - NS:    Authoritative name server
@@ -30,3 +30,16 @@ There are two sets of example files in 'config/', please follow the format to wr
 - ```reset```: re-load the configuration file.
 - ```set config <file_name>```: use another config file.
 - ```list```: list all the domain of current configuration.
+
+
+
+
+
+
+## Demo
+- For different query  
+  
+https://user-images.githubusercontent.com/96563567/226161319-83ae855e-469a-4f0a-abed-55e09a62d1fb.mp4
+- For terminal command  
+  
+https://user-images.githubusercontent.com/96563567/226161469-4788aa8c-8340-4a32-ba90-2e355ff4edad.mp4
