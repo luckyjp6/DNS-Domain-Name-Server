@@ -4,7 +4,7 @@
 #include <iomanip>
 #include "my_query.h"
 
-#define CONTENT_LENGTH 10000
+#define CONTENT_LENGTH 100000
 #define PATH_LENGTH    2000
 
 // details of each domain name
@@ -92,7 +92,6 @@ struct details {
             RDATA[0] = strlen(msg)-2;
             memcpy(RDATA+1, msg+1, strlen(msg)-2);
             r.RDLENGTH = strlen(msg)-1;
-            std::cout << r.RDLENGTH << std::endl;
         }
         else { /* others */
             char *data = strtok_r(msg, "\r\n", &msg);
@@ -166,6 +165,7 @@ struct domain {
             det.push_back(d);
             memset(pos, 0, strlen(pos));
         }
+        close(file_fd);
     }
     void clear() {
         memset(domain_name, 0, NAME_LENGTH);
@@ -234,19 +234,20 @@ struct config {
         clear();
 
         memset(path, 0, 1000);
+        memset(msg, 0, CONTENT_LENGTH);
+
         sprintf(path, "%s/%s", dir, filename);
         conf = open(path, O_RDONLY);
-
         read(conf, msg, CONTENT_LENGTH);
         char *m = msg;
         char *pos = strtok_r(m, "\r\n", &m);
         strcpy(forwardIP, pos);
-
-        while (pos = strtok_r(m, "\r\n", &m)) {
+        while (strlen(m) > 0) { 
+            if ((pos = strtok_r(m, "\r\n", &m)) == NULL) pos = m;
             domain d(pos, dir);
             d.read_domain();
             dom.push_back(d);
-            memset(pos, 0, CONTENT_LENGTH);
+            memset(pos, 0, strlen(pos));
         }
         close(conf);
     }

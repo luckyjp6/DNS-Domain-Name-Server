@@ -25,3 +25,8 @@ There are two sets of example files in 'config/', please follow the format to wr
 - SOA:   The start of a zone of authority
 - MX:    mail exchange
 - TXT:   text strings
+
+## Implemented Terminal Command
+- ```reset```: re-load the configuration file.
+- ```set config <file_name>```: use another config file.
+- ```list```: list all the domain of current configuration.
