@@ -71,16 +71,6 @@ struct Header {
         tmp = tmp >> 12;
         return tmp;
     }
-    // void print_() {
-    //     using namespace std;
-    //     cout << "ID: " << ID << endl;
-    //     cout << "flg: " << flg << endl;
-    //     cout << "QDCOUNT: " << QDCOUNT << endl;
-    //     cout << "ANCOUNT: " << ANCOUNT << endl;
-    //     cout << "NSCOUNT: " << NSCOUNT << endl;
-    //     cout << "ARCOUNT: " << ARCOUNT << endl;
-    //     cout << endl;
-    // }
 }__attribute__((packed));
 
 struct Question_const {
@@ -93,12 +83,6 @@ struct Question_const {
 struct Question {
     char    QNAME[NAME_LENGTH];  
     Question_const qc;
-    // void print_() {
-    //     using namespace std;
-    //     cout << "question: " << QNAME << endl;
-    //     cout << "QTYPE: " << qc.QTYPE << endl;
-    //     cout << "QCLASS: " << qc.QCLASS << endl;
-    // }
 };
 
 struct  RR_const {

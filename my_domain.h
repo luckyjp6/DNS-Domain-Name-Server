@@ -15,9 +15,10 @@ struct details {
     uint32_t    RDATA_int_4;
     in6_addr    RDATA_int_6;
 
-    details () { clear(); }
+    details () {}
     details (char *msg, char* domain_name) {
-        // process the details
+        // process the details 
+        clear(); 
         r.TYPE1 = 0; r.CLASS1 = 0; r.RDLENGTH = 0;
         char *tmp_name = strtok_r(msg, ",", &msg);
         if (strcmp(tmp_name, "@") == 0) {
@@ -199,9 +200,9 @@ struct domain {
             for (int now = 0; now < det.size(); now++) {
                 if (det[now].r.TYPE != 1 && det[now].r.TYPE != 28 && det[now].r.TYPE != 5) continue;
                 if (det[ans].r.RDLENGTH != strlen(det[now].NAME))
-                if (memcmp(det[now].NAME, wanted, det[ans].r.RDLENGTH) == 0) {
-                    addi_content.push_back(now);
-                }
+                    if (memcmp(det[now].NAME, wanted, det[ans].r.RDLENGTH) == 0) {
+                        addi_content.push_back(now);
+                    }
             }
         }
         sort(addi_content.begin(), addi_content.end());
