@@ -59,7 +59,7 @@ struct DNS_request {
     //     header.print_();
     //     question.print_();
     // }
-};
+}__attribute__((packed));
 struct  DNS_reply {
     Header      header;
     char        content[MSG_MAX];

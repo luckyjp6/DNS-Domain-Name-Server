@@ -49,8 +49,7 @@ struct details {
             else if (r.TYPE == 28) {
                 inet_pton(AF_INET6, RDATA, &RDATA_int_6);
                 r.RDLENGTH = sizeof(RDATA_int_6);
-            }
-            
+            }    
         }else if (r.TYPE == 6) { /* SOA */
             for (int i = 0; i < 2; i++) {
                 char *data = strtok_r(msg, " ", &msg);
@@ -131,7 +130,6 @@ struct details {
 // the zone
 struct domain {
     char    domain_name[NAME_LENGTH];
-    char    name[NAME_LENGTH];
     char    path[PATH_LENGTH];
     std::vector<details> det;
 
@@ -139,7 +137,6 @@ struct domain {
     domain (char *msg, char *dir) {
         char *pos = strtok_r(msg, ",", &msg);
         clear();
-        strcpy(name, pos);
         sprintf(path, "%s/%s", dir, msg);
     }
     void read_domain () {
@@ -173,7 +170,6 @@ struct domain {
     }
     void clear() {
         memset(domain_name, 0, NAME_LENGTH);
-        memset(name, 0, NAME_LENGTH);
         memset(path, 0, PATH_LENGTH);
         det.clear();
     }
