@@ -1,19 +1,21 @@
 #ifndef MY_DOMAIN_H
 #define MY_DOMAIN_H
 
+#include <iomanip>
 #include "my_query.h"
 
-#define CONTENT_MAX 10000
+#define CONTENT_LENGTH 10000
+#define PATH_LENGTH    2000
 
 // details of each domain name
 struct details {
     char        NAME[NAME_LENGTH];
     RR_const    r;
-    char        RDATA[CONTENT_MAX];
+    char        RDATA[CONTENT_LENGTH];
     uint32_t    RDATA_int_4;
     in6_addr    RDATA_int_6;
 
-    details () {}
+    details () { clear(); }
     details (char *msg, char* domain_name) {
         // process the details
         r.TYPE1 = 0; r.CLASS1 = 0; r.RDLENGTH = 0;
@@ -23,8 +25,7 @@ struct details {
         }else {
             NAME[0] = strlen(tmp_name);
             sprintf(NAME+1, "%s%s", tmp_name, domain_name);
-        }
-        
+        }        
         r.TTL = atoi(strtok_r(msg, ",", &msg)); 
         r.CLASS = 1;  strtok_r(msg, ",", &msg); 
         char *TYPE_char = strtok_r(msg, ",", &msg);
@@ -36,7 +37,7 @@ struct details {
         else if (strcmp(TYPE_char, "TXT") == 0) r.TYPE = 16;
         else if (strcmp(TYPE_char, "AAAA") == 0) r.TYPE = 28;
      
-        memset(RDATA, 0, CONTENT_MAX);
+        memset(RDATA, 0, CONTENT_LENGTH);
         if (r.TYPE == 1 || r.TYPE == 28) { /* A and AAAA */
             char *data = strtok_r(msg, "\r\n", &msg);
             strcpy(RDATA, data);
@@ -106,42 +107,53 @@ struct details {
             r.RDLENGTH++;
         }
     }
+    void clear() {
+        memset(NAME, 0, NAME_LENGTH);
+        memset(RDATA, 0, CONTENT_LENGTH);
+    }
     void to_network_endian() {
         r.TTL = htonl(r.TTL);
         r.RDLENGTH = htons(r.RDLENGTH);
     }
-    // void print_() {
-    //     using namespace std;
-    //     cout << "subdomain name: " << NAME << endl;
-    //     cout << "TTL:" << ntohl(r.TTL) << endl;
-    //     cout << "CLASS: " << r.CLASS << endl;
-    //     cout << "TYPE: " << r.TYPE << endl;
-    //     cout << "RDLENGTH: " << ntohs(r.RDLENGTH) << endl;
-    //     if (r.TYPE != 1 && r.TYPE != 28) cout << "RDATA: " << RDATA << endl;
-    // }
+    void print_() {
+        std::cout << "subdomain name: " << std::setw(30) << NAME << "\t";
+        std::cout << "TTL:" << std::setw(6) << ntohl(r.TTL) << "\t";
+        std::cout << "CLASS: " << std::setw(3) << r.CLASS << "\t";
+        std::cout << "TYPE: " << std::setw(3) << r.TYPE << "\t";
+        std::cout << "RDLENGTH: " << std::setw(5) << ntohs(r.RDLENGTH) << "\t";
+        if (r.TYPE != 1 && r.TYPE != 28) std::cout << "RDATA: " << RDATA;
+    }
 };
 
 // the zone
 struct domain {
     char    domain_name[NAME_LENGTH];
     char    name[NAME_LENGTH];
-    char    path[NAME_LENGTH];
+    char    path[PATH_LENGTH];
     std::vector<details> det;
 
     domain () {}
     domain (char *msg, char *dir) {
         char *pos = strtok_r(msg, ",", &msg);
+        clear();
         strcpy(name, pos);
         sprintf(path, "%s/%s", dir, msg);
     }
     void read_domain () {
-        int file = open(path, O_RDONLY);
-        char msg[CONTENT_MAX];
-        read(file, msg, CONTENT_MAX);
-        char    *m = msg, *pos;
+        int     file_fd;
+        char    msg[CONTENT_LENGTH];
+        char    *m, *pos, *for_dot, *dot;
         int     now_at = 0;
-        char    *for_dot = strtok_r(m, "\r\n", &m), *dot;
-        while(dot = strtok_r(for_dot, ".", &for_dot)) {
+
+        if ((file_fd = open(path, O_RDONLY)) < 0) {
+            std::cout << "can't open file: " << path << std::endl;
+            exit(-1);
+        }
+
+        read(file_fd, msg, CONTENT_LENGTH);
+        m = msg;
+        for_dot = strtok_r(m, "\r\n", &m);
+        while((dot = strtok_r(for_dot, ".", &for_dot)) != NULL) {
             int dot_len = strlen(dot);
             domain_name[now_at++] = dot_len;
             memcpy(domain_name + now_at, dot, dot_len);
@@ -154,6 +166,12 @@ struct domain {
             det.push_back(d);
             memset(pos, 0, strlen(pos));
         }
+    }
+    void clear() {
+        memset(domain_name, 0, NAME_LENGTH);
+        memset(name, 0, NAME_LENGTH);
+        memset(path, 0, PATH_LENGTH);
+        det.clear();
     }
     void get_detail (Question q, std::vector<int> &ans_content) {
         for (int i = 0; i < det.size(); i++) {
@@ -193,13 +211,14 @@ struct domain {
             }
         }
     }
-    // void print_ () {
-    //     using namespace std;
-    //     cout << "domain name: " << domain_name << endl;
-    //     cout << "path: " << path << endl;
-    //     for (auto d:det) d.print_();
-    //     cout << endl;
-    // }
+    void print_ () {
+        std::cout << "domain name: " << domain_name << std::endl;
+        std::cout << "path: " << path << std::endl;
+        for (auto d:det) {
+            d.print_();
+            std::cout << std::endl;
+        }
+    }
 };
 
 // the config file
@@ -207,18 +226,33 @@ struct config {
     char forwardIP[100];
     std::vector<domain> dom;
 
-    void read_config(int fd, char *dir) {
-        char msg[CONTENT_MAX];
-        read(fd, msg, CONTENT_MAX);
+    void read_config(char *filename) {
+        int  conf;
+        char path[1000];
+        char msg[CONTENT_LENGTH];
+        char dir[] = "./config";
+        clear();
+
+        memset(path, 0, 1000);
+        sprintf(path, "%s/%s", dir, filename);
+        conf = open(path, O_RDONLY);
+
+        read(conf, msg, CONTENT_LENGTH);
         char *m = msg;
         char *pos = strtok_r(m, "\r\n", &m);
         strcpy(forwardIP, pos);
+
         while (pos = strtok_r(m, "\r\n", &m)) {
             domain d(pos, dir);
             d.read_domain();
             dom.push_back(d);
-            memset(pos, 0, strlen(pos));
+            memset(pos, 0, CONTENT_LENGTH);
         }
+        close(conf);
+    }
+    void clear() {
+        memset(forwardIP, 0, 100);
+        dom.clear();
     }
     int get_domain(char *wanted) {
         std::string s(wanted);
@@ -227,15 +261,13 @@ struct config {
         }
         return -1;
     }
-    // void print_() {
-    //     using namespace std;
-    //     cout << "forwardIP: " << forwardIP << endl;
-    //     for (auto d: dom) {
-    //         d.read_domain();
-    //         cout << d.domain_name << endl;
-    //         d.print_();
-    //     }
-    // }
+    void print_() {
+        std::cout << "forwardIP: " << forwardIP << std::endl;
+        for (auto d: dom) {
+            std::cout << "--------------------------------------" << std::endl;
+            d.print_();
+        }
+    }
 };
 
 #endif
