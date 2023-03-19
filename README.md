@@ -18,7 +18,7 @@ The following lines are the domain(s) and its corresponding zone file(s).
 There are two sets of example files in 'config/', please follow the format to write your own config file(s).
 
 ## Implemented Query Types
-- A:     IPv4 host address
+- A:     IPv4 host address (default type)
 - AAAA:  IPv6 host address
 - CNAME: The canonical name for an alias
 - NS:    Authoritative name server
