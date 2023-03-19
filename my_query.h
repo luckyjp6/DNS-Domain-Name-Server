@@ -21,13 +21,13 @@
 #define NAME_LENGTH 10000
 
 /* 
-1:  A x
+1:  A
 2:  NS
-5:  CNAME x
-6:  SOA x
+5:  CNAME
+6:  SOA
 15: MX
-16: TXT x
-28: AAAA x
+16: TXT
+28: AAAA
 */
 
 // binary part of the header
@@ -71,16 +71,16 @@ struct Header {
         tmp = tmp >> 12;
         return tmp;
     }
-    void print_() {
-        using namespace std;
-        cout << "ID: " << ID << endl;
-        cout << "flg: " << flg << endl;
-        cout << "QDCOUNT: " << QDCOUNT << endl;
-        cout << "ANCOUNT: " << ANCOUNT << endl;
-        cout << "NSCOUNT: " << NSCOUNT << endl;
-        cout << "ARCOUNT: " << ARCOUNT << endl;
-        cout << endl;
-    }
+    // void print_() {
+    //     using namespace std;
+    //     cout << "ID: " << ID << endl;
+    //     cout << "flg: " << flg << endl;
+    //     cout << "QDCOUNT: " << QDCOUNT << endl;
+    //     cout << "ANCOUNT: " << ANCOUNT << endl;
+    //     cout << "NSCOUNT: " << NSCOUNT << endl;
+    //     cout << "ARCOUNT: " << ARCOUNT << endl;
+    //     cout << endl;
+    // }
 }__attribute__((packed));
 
 struct Question_const {
@@ -93,12 +93,12 @@ struct Question_const {
 struct Question {
     char    QNAME[NAME_LENGTH];  
     Question_const qc;
-    void print_() {
-        using namespace std;
-        cout << "question: " << QNAME << endl;
-        cout << "QTYPE: " << qc.QTYPE << endl;
-        cout << "QCLASS: " << qc.QCLASS << endl;
-    }
+    // void print_() {
+    //     using namespace std;
+    //     cout << "question: " << QNAME << endl;
+    //     cout << "QTYPE: " << qc.QTYPE << endl;
+    //     cout << "QCLASS: " << qc.QCLASS << endl;
+    // }
 };
 
 struct  RR_const {

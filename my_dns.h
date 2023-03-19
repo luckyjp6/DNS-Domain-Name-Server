@@ -18,7 +18,8 @@ struct DNS_request {
         r++;
         question.qc.QTYPE = (int)r[1]; 
         question.qc.QCLASS = (int)r[3];
-
+        
+        to_host_endian();
     }
     bool check_nip(char *domain_name) {
         char *now = question.QNAME;
@@ -54,10 +55,10 @@ struct DNS_request {
         header.to_network_endian();
         // question.to_host_endian();
     }
-    void print_() {
-        header.print_();
-        question.print_();
-    }
+    // void print_() {
+    //     header.print_();
+    //     question.print_();
+    // }
 };
 struct  DNS_reply {
     Header      header;

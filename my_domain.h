@@ -3,11 +3,13 @@
 
 #include "my_query.h"
 
+#define CONTENT_MAX 10000
+
 // details of each domain name
 struct details {
     char        NAME[NAME_LENGTH];
     RR_const    r;
-    char        RDATA[MSG_MAX];
+    char        RDATA[CONTENT_MAX];
     uint32_t    RDATA_int_4;
     in6_addr    RDATA_int_6;
 
@@ -34,7 +36,7 @@ struct details {
         else if (strcmp(TYPE_char, "TXT") == 0) r.TYPE = 16;
         else if (strcmp(TYPE_char, "AAAA") == 0) r.TYPE = 28;
      
-        memset(RDATA, 0, MSG_MAX);
+        memset(RDATA, 0, CONTENT_MAX);
         if (r.TYPE == 1 || r.TYPE == 28) { /* A and AAAA */
             char *data = strtok_r(msg, "\r\n", &msg);
             strcpy(RDATA, data);
@@ -108,15 +110,15 @@ struct details {
         r.TTL = htonl(r.TTL);
         r.RDLENGTH = htons(r.RDLENGTH);
     }
-    void print_() {
-        using namespace std;
-        cout << "subdomain name: " << NAME << endl;
-        cout << "TTL:" << ntohl(r.TTL) << endl;
-        cout << "CLASS: " << r.CLASS << endl;
-        cout << "TYPE: " << r.TYPE << endl;
-        cout << "RDLENGTH: " << ntohs(r.RDLENGTH) << endl;
-        if (r.TYPE != 1 && r.TYPE != 28) cout << "RDATA: " << RDATA << endl;
-    }
+    // void print_() {
+    //     using namespace std;
+    //     cout << "subdomain name: " << NAME << endl;
+    //     cout << "TTL:" << ntohl(r.TTL) << endl;
+    //     cout << "CLASS: " << r.CLASS << endl;
+    //     cout << "TYPE: " << r.TYPE << endl;
+    //     cout << "RDLENGTH: " << ntohs(r.RDLENGTH) << endl;
+    //     if (r.TYPE != 1 && r.TYPE != 28) cout << "RDATA: " << RDATA << endl;
+    // }
 };
 
 // the zone
@@ -134,9 +136,8 @@ struct domain {
     }
     void read_domain () {
         int file = open(path, O_RDONLY);
-        char msg[MSG_MAX];
-        read(file, msg, MSG_MAX);
-        
+        char msg[CONTENT_MAX];
+        read(file, msg, CONTENT_MAX);
         char    *m = msg, *pos;
         int     now_at = 0;
         char    *for_dot = strtok_r(m, "\r\n", &m), *dot;
@@ -192,13 +193,13 @@ struct domain {
             }
         }
     }
-    void print_ () {
-        using namespace std;
-        cout << "domain name: " << domain_name << endl;
-        cout << "path: " << path << endl;
-        for (auto d:det) d.print_();
-        cout << endl;
-    }
+    // void print_ () {
+    //     using namespace std;
+    //     cout << "domain name: " << domain_name << endl;
+    //     cout << "path: " << path << endl;
+    //     for (auto d:det) d.print_();
+    //     cout << endl;
+    // }
 };
 
 // the config file
@@ -207,9 +208,8 @@ struct config {
     std::vector<domain> dom;
 
     void read_config(int fd, char *dir) {
-        char msg[MSG_MAX];
-        read(fd, msg, MSG_MAX);
-
+        char msg[CONTENT_MAX];
+        read(fd, msg, CONTENT_MAX);
         char *m = msg;
         char *pos = strtok_r(m, "\r\n", &m);
         strcpy(forwardIP, pos);
@@ -227,15 +227,15 @@ struct config {
         }
         return -1;
     }
-    void print_() {
-        using namespace std;
-        cout << "forwardIP: " << forwardIP << endl;
-        for (auto d: dom) {
-            d.read_domain();
-            cout << d.domain_name << endl;
-            d.print_();
-        }
-    }
+    // void print_() {
+    //     using namespace std;
+    //     cout << "forwardIP: " << forwardIP << endl;
+    //     for (auto d: dom) {
+    //         d.read_domain();
+    //         cout << d.domain_name << endl;
+    //         d.print_();
+    //     }
+    // }
 };
 
 #endif
