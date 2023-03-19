@@ -108,7 +108,10 @@ struct details {
     }
     void clear() {
         memset(NAME, 0, NAME_LENGTH);
+        // memset(&r, 0, sizeof(RR_const));
         memset(RDATA, 0, CONTENT_LENGTH);
+        memset(&RDATA_int_4, 0, sizeof(uint32_t));
+        memset(&RDATA_int_6, 0, sizeof(in6_addr));
     }
     void to_network_endian() {
         r.TTL = htonl(r.TTL);

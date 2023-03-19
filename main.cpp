@@ -87,6 +87,7 @@ int main(int argc, char **argv) {
             
         // handle unknown domain
             if (domain_index < 0) {
+                cout << "Unknown domain. Forward the request to " << my_conf.forwardIP << endl;
                 // send dns request to the "forward ip" indicate in config file
                 int         resolve_fd, reply_len;
                 sockaddr_in forward_addr;
@@ -107,6 +108,7 @@ int main(int argc, char **argv) {
                 // get the response
                 reply_len = read(resolve_fd, &reply, sizeof(DNS_reply));
                 sendto(srv, &reply, reply_len, 0, (sockaddr*)&cliaddr, clilen);
+                cout << "% "; fflush(stdout);
                 continue;
             }
             
