@@ -8,7 +8,9 @@ The DNS document：
 ## Usage
 Use ```make``` to generate the execution file "dns"  
 Use the following intruction to start the DNS server. 
-```./dns <port-number> <path/to/the/config/file>```
+```
+./dns <port-number> <path/to/the/config/file>
+```
 
 ## Config File
 The first line will be a IP address that our server will forward the request to if the request domain is not in the config file.
