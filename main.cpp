@@ -1,4 +1,5 @@
-#include "function.h"
+#include "my_domain.h"
+#include "my_dns.h"
 
 using namespace std;
 
@@ -32,7 +33,7 @@ int main(int argc, char **argv) {
     int conf = open(path, O_RDONLY);
     config my_conf;
     my_conf.read_config(conf, argv[2]);
-
+cout << "start service" << endl;
     while (1) {
         DNS_request request;
         DNS_reply reply;
@@ -42,6 +43,8 @@ int main(int argc, char **argv) {
             cout << "can't recvfrom socket srv" << endl;
             return -1;
         }
+        // cout << "get request" << endl;
+        // return 0;
         request.process_request_payload();
         request.to_host_endian();
 
